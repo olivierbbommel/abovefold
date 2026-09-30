@@ -1,0 +1,11 @@
+.env
+data/
+worker/.venv/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+web/node_modules/
+web/.next/
+
+# Worker dependencies (wrangler bundles at deploy time; nothing here is source)
+workers/*/node_modules/

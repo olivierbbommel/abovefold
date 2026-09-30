@@ -1,0 +1,10 @@
+Abovefold
+Copyright (c) 2026 olivierbbommel. Licensed under the MIT License (see LICENSE).
+
+This project runs, unmodified and as a separate container, Miniflux
+(https://miniflux.app), Copyright Frédéric Guillot and contributors, licensed
+under the Apache License 2.0.
+
+It also uses pgvector/pgvector (PostgreSQL License) and third-party libraries
+listed in web/package.json and worker/requirements.txt, each under its own
+license.

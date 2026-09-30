@@ -1,0 +1,101 @@
+/* Styles owned by the reader workstream of the 2026-09 redesign. */
+
+/* ---- Reader (spec 5.3) ------------------------------------------------ */
+
+/* Clear the phone tab bar (50 + safe area) with room to spare. */
+.reader .reader-column { padding-bottom: calc(50px + env(safe-area-inset-bottom) + 40px); }
+@media (width >= 64rem) { .reader .reader-column { padding-bottom: 6rem; } }
+
+/* Top bar: transparent at rest, glass with a hairline once scrolled.
+   Its own view-transition name keeps it out of the page cross-fade. */
+.reader-bar {
+  view-transition-name: chrome-top;
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 1px solid transparent;
+  transition: background-color var(--dur-quick) var(--ease-standard), border-color var(--dur-quick) var(--ease-standard);
+}
+.reader-bar[data-scrolled] {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  border-bottom-color: var(--hairline);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .reader-bar[data-scrolled] { background: var(--surface-2); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .reader-bar[data-scrolled] { background: var(--surface-2); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .reader-bar[data-scrolled] { background: var(--surface-2); border-bottom-color: var(--line); }
+}
+/* The bar spans the content column on desktop, the column is centred. */
+@media (width >= 64rem) {
+  .reader-bar { padding-top: 0; }
+}
+
+.reader-title { font-optical-sizing: auto; }
+
+/* Summary text inside ai-bg: 15/21 on a phone, 14/20 on desktop. */
+.reader-summary { font-size: 0.9375rem; line-height: 1.3125rem; }
+@media (width >= 64rem) { .reader-summary { font-size: 0.875rem; line-height: 1.25rem; } }
+
+/* Reader body: the measure is the 640 column; first paragraph not indented
+   (none are), and a heading recovered from markdown reads as a subhead. */
+.reader-body { font-optical-sizing: auto; overflow-wrap: break-word; }
+.reader-subhead {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.625rem;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+
+.reader-menu-item {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  text-align: left;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.5rem;
+  transition: background-color 120ms var(--ease-standard);
+}
+.reader-menu-item:hover, .reader-menu-item:focus-visible { background: var(--surface-2); }
+@media (width >= 64rem) { .reader-menu-item { min-height: 36px; font-size: 0.875rem; line-height: 1.25rem; } }
+.reader-menu { animation: reader-pop var(--dur-quick) var(--ease-enter); transform-origin: top right; }
+@keyframes reader-pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+
+/* ---- List to reader (spec 3.2) ----------------------------------------
+   The title morphs over dur-slow on ease-standard (globals.css sets that for
+   every group). The two snapshots of a headline are different sizes and
+   weights, so they cross-fade inside the moving group rather than
+   stretching one bitmap into the other. */
+::view-transition-old(*):only-child, ::view-transition-new(*):only-child { animation-duration: 200ms; }
+::view-transition-group(chrome-top) { z-index: 50; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*):only-child, ::view-transition-new(*):only-child { animation-duration: 120ms; }
+}
+
+/* ---- Action sheet (ConfirmDialog) --------------------------------------
+   Phone: anchored to the bottom like an iOS action sheet, over the tab bar.
+   Desktop: a centred dialog. */
+.action-sheet { animation: action-sheet-in var(--spring-gentle-dur) var(--spring-gentle) both; }
+.action-sheet-scrim { animation: vt-fade-in var(--dur-base) var(--ease-standard) both; }
+@keyframes action-sheet-in { from { transform: translateY(100%); } }
+@media (width >= 64rem) {
+  .action-sheet { animation: action-sheet-in-desktop var(--dur-base) var(--ease-enter) both; }
+  @keyframes action-sheet-in-desktop { from { opacity: 0; transform: scale(0.98); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-sheet, .reader-menu { animation: vt-fade-in 120ms linear both; }
+}
+
+/* ---- Row menus (source rows, newsletters) ----------------------------- */
+.row-menu { animation: reader-pop var(--dur-quick) var(--ease-enter); transform-origin: top right; }
+@media (prefers-reduced-motion: reduce) { .row-menu { animation: none; } }

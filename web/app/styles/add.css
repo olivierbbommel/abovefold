@@ -1,0 +1,56 @@
+/* Styles owned by the add workstream of the 2026-09 redesign (spec 5.4, 5.5, 3.2). */
+
+/* Field focus: 2px accent, drawn inside so the box never shifts. */
+.add-box:focus-within { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.add-box .add-input:focus-visible { outline: none; }
+.add-find:focus-visible { outline-offset: 2px; }
+
+/* Glyph advances. Headless Chromium on Linux hints fonts fully, which rounds
+   each IBM Plex advance to whole pixels at small sizes: at 11px 600 the T
+   became 8px and the E 6px, so the tracked eyebrow read "LAT EST".
+   geometricPrecision turns hinting off for this text (measured: T 7.16,
+   E 7.39); CoreText on Apple devices never hints, so nothing changes there.
+   The same line belongs in globals.css for the whole app; see the report. */
+.add-panel, .add-fyr { text-rendering: geometricPrecision; }
+
+/* Candidate headlines: Newsreader 15/20. */
+.add-headline { font-family: var(--font-serif); font-size: 0.9375rem; line-height: 1.25rem; font-optical-sizing: auto; text-wrap: pretty; }
+
+/* The chip and the Find label crossfade (120ms); cards rise 6px, staggered by
+   inline animation-delay; skeletons and results fade (200ms). */
+@keyframes add-fade { from { opacity: 0; } }
+@keyframes add-rise { from { opacity: 0; transform: translateY(6px); } }
+.add-chip { animation: add-fade 120ms linear; }
+.add-xfade { transition: opacity 120ms linear; }
+.add-fade-in { animation: add-fade 200ms var(--ease-standard) backwards; }
+.add-rise { animation: add-rise 260ms var(--ease-enter) backwards; }
+
+/* The Follow button holds its width while its label swaps. */
+.add-primary .add-follow-label { min-height: 1.25rem; }
+.add-primary[aria-busy="true"] { cursor: progress; }
+
+/* Catalog rows are opaque (the swipe pane sits behind them) and match
+   whatever they sit on: paper on a page, the sheet's surface in the sheet. */
+.add-fyr-row { background: var(--add-row-bg, var(--bg)); }
+.sheet-panel .add-fyr { --add-row-bg: var(--surface); }
+
+/* Hide in the catalog: a hover control where there is a pointer that hovers,
+   swipe everywhere else. It stays in the accessibility tree either way. */
+.add-hide { opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
+.add-fyr-row:hover .add-hide, .add-fyr-row:focus-within .add-hide, .add-hide:focus-visible { opacity: 1; }
+@media not ((hover: hover) and (pointer: fine)) {
+  .add-hide {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; opacity: 1;
+  }
+}
+
+/* The address row scrolls inside itself rather than wrapping or widening the page. */
+.add-address-text { scrollbar-width: none; }
+.add-address-text::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .add-rise, .add-fade-in { animation: none; }
+  .add-chip { animation: add-fade 120ms linear; }
+  .add-hide { transition: none; }
+}

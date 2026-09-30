@@ -1,0 +1,435 @@
+@import "tailwindcss";
+@import "./styles/add.css";
+@import "./styles/nav.css";
+@import "./styles/reader.css";
+
+/*
+ * Abovefold design tokens.
+ *
+ * Rust is reserved for things the USER does. Indigo is reserved for things
+ * the AI produced. Never mix them in one component; indigo is never a button.
+ *
+ * Every text token passes 4.5:1 on every surface it can sit on, including
+ * surface-3, which is the floor: nothing darker than surface-3 carries text.
+ * The previous --faint was 2.95:1 on paper and carried every timestamp.
+ */
+:root {
+  --bg: #FAF8F4;
+  --surface: #FFFFFF;
+  --surface-2: #F3EFE8;
+  --surface-3: #EFEAE2;
+  --text: #1F1B16;
+  --text-2: #3F3831;
+  --muted: #5C544B;
+  --faint: #6F675E;
+  --border: #DCD5CA;
+  --hairline: #E8E2D9;
+  --accent: #B0491F;
+  --accent-ink: #FFFFFF;
+  --accent-soft: rgba(176,73,31,0.10);
+  --ai: #3B62C4;
+  --ai-bg: #F0F2F8;
+  --ai-ink: #2E3345;
+  --ok: #2F6B43;
+  --danger: #B3261E;
+  --danger-ink: #FFFFFF;
+  --glass: rgba(250,248,244,0.78);
+  --scrim: rgba(31,27,22,0.40);
+  --shadow-1: 0 1px 2px rgba(31,27,22,.05), 0 2px 8px rgba(31,27,22,.05);
+  --shadow-2: 0 1px 3px rgba(31,27,22,.08), 0 6px 20px rgba(31,27,22,.12);
+  --shadow-3: 0 -8px 32px rgba(31,27,22,.16);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14110E;
+    --surface: #1C1815;
+    --surface-2: #221D18;
+    --surface-3: #282219;
+    --text: #EFE9E0;
+    --text-2: #D2C8BA;
+    --muted: #ADA294;
+    --faint: #948A7E;
+    --border: #332C25;
+    --hairline: #2A2520;
+    --accent: #E0724A;
+    --accent-ink: #14110E;
+    --accent-soft: rgba(224,114,74,0.16);
+    --ai: #8FA8F0;
+    --ai-bg: #1B1E28;
+    --ai-ink: #C9CFE0;
+    --ok: #7DB48B;
+    --danger: #EA7068;
+    --danger-ink: #14110E;
+    --glass: rgba(20,17,14,0.72);
+    --scrim: rgba(0,0,0,0.55);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.45);
+    --shadow-2: 0 1px 3px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.5);
+    --shadow-3: 0 -8px 32px rgba(0,0,0,.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #14110E;
+  --surface: #1C1815;
+  --surface-2: #221D18;
+  --surface-3: #282219;
+  --text: #EFE9E0;
+  --text-2: #D2C8BA;
+  --muted: #ADA294;
+  --faint: #948A7E;
+  --border: #332C25;
+  --hairline: #2A2520;
+  --accent: #E0724A;
+  --accent-ink: #14110E;
+  --accent-soft: rgba(224,114,74,0.16);
+  --ai: #8FA8F0;
+  --ai-bg: #1B1E28;
+  --ai-ink: #C9CFE0;
+  --ok: #7DB48B;
+  --danger: #EA7068;
+  --danger-ink: #14110E;
+  --glass: rgba(20,17,14,0.72);
+  --scrim: rgba(0,0,0,0.55);
+  --shadow-1: 0 1px 2px rgba(0,0,0,.45);
+  --shadow-2: 0 1px 3px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.5);
+  --shadow-3: 0 -8px 32px rgba(0,0,0,.6);
+}
+
+/* Increased contrast: faint text becomes muted, hairlines become lines, glass goes opaque. */
+@media (prefers-contrast: more) {
+  :root { --faint: var(--muted); --hairline: var(--border); --glass: var(--surface-2); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass: var(--surface-2); }
+}
+
+:root {
+  /* Aliases. The newsletter styles below always referenced --ink, --ink-2
+     and --line, which never existed, so issues rendered in inherited colours. */
+  --ink: var(--text);
+  --ink-2: var(--text-2);
+  --line: var(--border);
+
+  /* Motion (spec 3.1). Six moments get choreography; everything else is
+     quick colour and opacity. Springs are simulated from stiffness/damping
+     and sampled to linear(); the duration is part of the token. */
+  --dur-instant: 100ms;
+  --dur-quick: 180ms;
+  --dur-base: 260ms;
+  --dur-slow: 360ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --spring-gentle-dur: 530ms;
+  --spring-gentle: var(--ease-enter);
+  --spring-snappy-dur: 400ms;
+  --spring-snappy: var(--ease-enter);
+  --tabbar-h: 50px;
+}
+@supports (animation-timing-function: linear(0, 1)) {
+  :root {
+    --spring-gentle: linear(0, 0.059, 0.188, 0.341, 0.489, 0.62, 0.727, 0.812, 0.875, 0.921, 0.953, 0.974, 0.988, 0.996, 1.001, 1.003, 1.004, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1.001, 1.001);
+    --spring-snappy: linear(0, 0.058, 0.189, 0.344, 0.496, 0.63, 0.74, 0.826, 0.89, 0.936, 0.967, 0.987, 0.999, 1.005, 1.008, 1.009, 1.008, 1.007, 1.006, 1.004, 1.003, 1.002, 1.001, 1.001, 1.001);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms; --dur-quick: 0ms; --dur-base: 0ms; --dur-slow: 0ms;
+    --spring-gentle-dur: 0ms; --spring-snappy-dur: 0ms;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--border);
+  --color-hairline: var(--hairline);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-ai: var(--ai);
+  --color-ai-bg: var(--ai-bg);
+  --color-ai-ink: var(--ai-ink);
+  --color-ok: var(--ok);
+  --color-danger: var(--danger);
+  --color-danger-ink: var(--danger-ink);
+  --color-glass: var(--glass);
+  --color-scrim: var(--scrim);
+  --shadow-e1: var(--shadow-1);
+  --shadow-e2: var(--shadow-2);
+  --shadow-e3: var(--shadow-3);
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Type roles (spec 2.2). One class per role so the scale cannot drift again;
+ * the audit counted sixteen ad hoc sizes. Sizes are rem so browser zoom and
+ * text size settings scale them. Phone values first, desktop at >= 64rem.
+ */
+@utility t-display { font-family: var(--font-serif); font-weight: 500; font-size: 1.875rem; line-height: 2.125rem; letter-spacing: -0.015em; text-wrap: balance;
+  @media (width >= 64rem) { font-size: 2.125rem; line-height: 2.375rem; letter-spacing: -0.02em; } }
+@utility t-lead { font-family: var(--font-serif); font-weight: 500; font-size: 1.625rem; line-height: 1.875rem; letter-spacing: -0.012em; text-wrap: pretty;
+  @media (width >= 64rem) { font-size: 1.875rem; line-height: 2.125rem; letter-spacing: -0.015em; } }
+@utility t-headline { font-family: var(--font-serif); font-weight: 600; font-size: 1.125rem; line-height: 1.4375rem; letter-spacing: -0.005em; text-wrap: pretty;
+  @media (width >= 64rem) { font-size: 1.1875rem; line-height: 1.5625rem; } }
+@utility t-reader-title { font-family: var(--font-serif); font-weight: 500; font-size: 1.875rem; line-height: 2.125rem; letter-spacing: -0.015em; text-wrap: balance;
+  @media (width >= 64rem) { font-size: 2.375rem; line-height: 2.625rem; letter-spacing: -0.02em; } }
+@utility t-reader { font-family: var(--font-serif); font-weight: 400; font-size: 1.125rem; line-height: 1.8125rem; hanging-punctuation: first;
+  @media (width >= 64rem) { font-size: 1.1875rem; line-height: 1.875rem; } }
+@utility t-title { font-family: var(--font-sans); font-weight: 600; font-size: 1.0625rem; line-height: 1.375rem;
+  @media (width >= 64rem) { font-size: 0.9375rem; line-height: 1.25rem; } }
+@utility t-body { font-family: var(--font-sans); font-weight: 400; font-size: 1.0625rem; line-height: 1.5rem;
+  @media (width >= 64rem) { font-size: 0.875rem; line-height: 1.25rem; } }
+@utility t-meta { font-family: var(--font-sans); font-weight: 400; font-size: 0.8125rem; line-height: 1.125rem; font-variant-numeric: tabular-nums;
+  @media (width >= 64rem) { font-size: 0.75rem; line-height: 1rem; } }
+@utility t-eyebrow { font-family: var(--font-sans); font-weight: 600; font-size: 0.75rem; line-height: 1rem; letter-spacing: 0.06em; text-transform: uppercase;
+  @media (width >= 64rem) { font-size: 0.6875rem; line-height: 0.875rem; letter-spacing: 0.07em; } }
+@utility t-caption { font-family: var(--font-sans); font-weight: 400; font-size: 0.75rem; line-height: 1rem;
+  @media (width >= 64rem) { font-size: 0.6875rem; line-height: 0.875rem; } }
+@utility t-tab { font-family: var(--font-sans); font-weight: 500; font-size: 0.6875rem; line-height: 0.8125rem; }
+@utility t-nav { font-family: var(--font-sans); font-weight: 400; font-size: 0.8125rem; line-height: 1.125rem; }
+@utility t-button { font-family: var(--font-sans); font-weight: 600; font-size: 0.9375rem; line-height: 1.25rem;
+  @media (width >= 64rem) { font-size: 0.8125rem; line-height: 1.125rem; } }
+@utility t-chip { font-family: var(--font-sans); font-weight: 500; font-size: 0.8125rem; line-height: 1rem;
+  @media (width >= 64rem) { font-size: 0.75rem; } }
+
+/* The functional layer (tab bar, scrolled top bars, sheet headers) is the
+   only place translucency lives. Falls back to opaque surface-2. */
+@utility glass { background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(140%); backdrop-filter: blur(20px) saturate(140%);
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { background: var(--surface-2); } }
+
+html, body {
+  /* A single over-wide control used to stretch the whole document. Nothing
+     should ever scroll the page sideways. */
+  overflow-x: clip;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  font-kerning: normal;
+  /* geometricPrecision, not optimizeLegibility: with hinting on (Chrome on
+     Linux and Windows) IBM Plex advances round to whole pixels at small sizes,
+     so an 8px T sat next to a 6px E and "LATEST" read as "LAT EST". Apple
+     devices never hint, so they looked right either way. */
+  text-rendering: geometricPrecision;
+}
+body { font-family: var(--font-sans); }
+
+/* Headlines are the serif; UI chrome is the sans. Optical sizing picks the
+   sturdier small-size cut automatically. */
+.headline { font-family: var(--font-serif); letter-spacing: -0.01em; text-wrap: pretty; font-optical-sizing: auto; }
+
+/* Must live in @layer base: Tailwind v4 emits utilities in a cascade layer,
+   and unlayered rules beat layered ones regardless of specificity. */
+@layer base {
+  a { color: var(--accent); text-decoration: none; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+}
+
+/* Phone hit targets never go below 44px. */
+@media (max-width: 640px) {
+  .tap { min-height: 44px; min-width: 44px; }
+}
+
+/* Press feedback for buttons only (spec A21: 0.94 was too much). Rows do
+   not scale; they darken. */
+.tap { transition: transform var(--dur-instant) var(--ease-standard), background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard); }
+.tap:active { transform: scale(0.97); }
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 150% 0; }
+  100% { background-position: -150% 0; }
+}
+.skeleton {
+  background-image: linear-gradient(100deg, var(--surface-2) 30%, var(--surface-3) 50%, var(--surface-2) 70%);
+  background-size: 250% 100%;
+  animation: skeleton-shimmer 2.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* Row enter (spec 3.2): content fades and rises 6px. Used for rows that are
+   NEW since the last render (refresh, undo), never on plain navigation. */
+@keyframes row-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.row-enter { animation: row-enter 240ms var(--ease-enter) backwards; }
+
+/* Kept for existing call sites; the stagger now caps at 8 rows. */
+.fade-rise { animation: row-enter 240ms var(--ease-enter) backwards; }
+.fade-rise:nth-child(2) { animation-delay: 30ms; } .fade-rise:nth-child(3) { animation-delay: 60ms; }
+.fade-rise:nth-child(4) { animation-delay: 90ms; } .fade-rise:nth-child(5) { animation-delay: 120ms; }
+.fade-rise:nth-child(6) { animation-delay: 150ms; } .fade-rise:nth-child(7) { animation-delay: 180ms; }
+.fade-rise:nth-child(n+8) { animation-delay: 210ms; }
+
+.row-hover { border-radius: var(--radius-md); transition: background-color 120ms var(--ease-standard); }
+@media (hover: hover) and (pointer: fine) { .row-hover:hover { background-color: var(--surface-2); } }
+
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 900ms linear infinite; }
+
+/* View transitions (spec 3.2 list to reader): a quiet cross-fade, and the
+   headline morphs when a story row and the reader title share a name. */
+::view-transition-old(root) { animation: 200ms var(--ease-exit) both vt-fade-out; }
+::view-transition-new(root) { animation: 250ms var(--ease-enter) both vt-fade-in; }
+::view-transition-group(*) { animation-duration: var(--dur-slow); animation-timing-function: var(--ease-standard); }
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background-image: none; background-color: var(--surface-2); }
+  .fade-rise, .row-enter { animation: none; }
+  .tap, .row-hover { transition: none; }
+  .tap:active { transform: none; }
+  .spin { animation: none; }
+  ::view-transition-group(*) { animation: none; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 120ms; }
+}
+
+/*
+ * A newsletter issue rendered as it was sent (see app/newsletter/[token]/[id]).
+ * The markup is sanitized but keeps whatever structure the sender used, so
+ * these rules exist to make arbitrary email HTML readable in this app's type
+ * rather than to reproduce the sender's design. Tables are the one thing
+ * email still lays out with, so they get to scroll rather than break the page.
+ */
+@layer base {
+  .newsletter-body {
+    color: var(--ink-2);
+    font-size: 16px;
+    line-height: 1.65;
+    overflow-wrap: break-word;
+  }
+  .newsletter-body h1,
+  .newsletter-body h2,
+  .newsletter-body h3,
+  .newsletter-body h4 {
+    color: var(--ink);
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 1.6em 0 0.5em;
+  }
+  .newsletter-body h1 { font-size: 1.4em; }
+  .newsletter-body h2 { font-size: 1.22em; }
+  .newsletter-body h3 { font-size: 1.08em; }
+  .newsletter-body p,
+  .newsletter-body ul,
+  .newsletter-body ol,
+  .newsletter-body blockquote {
+    margin: 0 0 1.1em;
+  }
+  .newsletter-body ul,
+  .newsletter-body ol {
+    padding-left: 1.4em;
+  }
+  .newsletter-body li { margin-bottom: 0.35em; }
+  .newsletter-body ul { list-style: disc; }
+  .newsletter-body ol { list-style: decimal; }
+  .newsletter-body blockquote {
+    border-left: 2px solid var(--line);
+    color: var(--muted);
+    padding-left: 1em;
+  }
+  .newsletter-body a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .newsletter-body img {
+    height: auto;
+    max-width: 100%;
+  }
+  /* Deferred until "Load images"; an <img> with no src renders its alt text
+     and a broken-image glyph, which is exactly the mess this replaces. */
+  .newsletter-body img[data-src] {
+    display: none;
+  }
+  .newsletter-body hr {
+    border: 0;
+    border-top: 1px solid var(--hairline);
+    margin: 2em 0;
+  }
+  .newsletter-body pre,
+  .newsletter-body code {
+    font-size: 0.9em;
+  }
+  .newsletter-body pre {
+    background: var(--surface-2);
+    border-radius: 8px;
+    overflow-x: auto;
+    padding: 0.9em 1em;
+  }
+  /* Email is laid out with tables; let a wide one scroll inside itself
+     instead of forcing the whole page sideways. */
+  .newsletter-body table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .newsletter-body td,
+  .newsletter-body th {
+    padding: 0.35em 0.6em;
+    vertical-align: top;
+  }
+}
+
+/* Story rows (spec 5.2). Actions are revealed on hover / keyboard focus where
+   a fine pointer exists, and stay screen-reader-only on touch, where the row
+   swipes. Gate on the pointer, not the width: an iPad with a trackpad should
+   get hover actions, a phone never should. */
+.story-actions { position: absolute; top: 0.75rem; right: 0; }
+@media (width >= 64rem) {
+  /* Keyed on the picture's class, not `img`: the favicon is an img too, and a
+     thumbnail that fails to load removes itself (Img.tsx). */
+  .story:not(.story-lead):has(.story-thumb) .story-actions { right: calc(96px + 1rem); }
+  .story-lead:not(:has(.story-thumb)) .story-actions { right: 0; top: 1.25rem; }
+}
+@media (hover: hover) and (pointer: fine) {
+  /* The swipe wrapper clips, so the hover plate's bleed goes on the wrapper. */
+  [data-swipe-row]:has(> .relative > .story) { margin-inline: -12px; }
+  .story { padding-inline: 12px; border-radius: var(--radius-md); transition: background-color 120ms var(--ease-standard); }
+  .story:hover { background-color: var(--surface-2); }
+  .story .story-text { padding-right: 5rem; }
+  /* The lead with an image puts its actions on a glass pill over the image's
+     corner instead of reserving 5rem beside the headline, which squeezed the
+     lead's text column to a third of the list. */
+  .story-lead:has(.story-thumb) .story-text { padding-right: 0; }
+  .story-lead:has(.story-thumb) .story-actions {
+    right: 0.5rem; top: calc(1.25rem + 0.5rem); padding: 2px; border-radius: var(--radius-md);
+    background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(140%); backdrop-filter: blur(20px) saturate(140%);
+  }
+  .story-actions { opacity: 0; transition: opacity 120ms var(--ease-standard); }
+  .story:hover .story-actions, .story:focus-within .story-actions, .story-actions:has([aria-pressed="true"]) { opacity: 1; }
+}
+@media not ((hover: hover) and (pointer: fine)) {
+  .story-actions { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@keyframes row-action-pop { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+.row-action-pop { animation: row-action-pop var(--spring-snappy-dur) var(--spring-snappy); }
+@media (prefers-reduced-motion: reduce) { .row-action-pop { animation: none; } }
+
+/* Sheet (spec 4.4). A bottom sheet on phone, a centred dialog on desktop. */
+dialog.sheet { width: 100vw; height: 100dvh; inset: 0; overflow: hidden; }
+dialog.sheet[open] { display: flex; align-items: flex-end; justify-content: center; }
+dialog.sheet::backdrop { background: var(--scrim); animation: vt-fade-in var(--dur-base) var(--ease-standard); }
+.sheet-panel { width: 100%; border-radius: var(--radius-xl) var(--radius-xl) 0 0; height: calc(100dvh - max(env(safe-area-inset-top), 12px) - 8px); }
+.sheet-panel[data-size="medium"] { height: 52dvh; }
+@media (width >= 64rem) {
+  dialog.sheet[open] { align-items: center; }
+  .sheet-panel, .sheet-panel[data-size="medium"] { width: 560px; height: auto; max-height: min(760px, calc(100dvh - 80px)); border-radius: var(--radius-xl); }
+  .sheet-grabber, .sheet-cancel { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { dialog.sheet::backdrop { animation: vt-fade-in 120ms linear; } }

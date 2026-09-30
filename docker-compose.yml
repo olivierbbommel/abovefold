@@ -1,0 +1,85 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: abovefold
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: abovefold
+    volumes:
+      - ./data/pg:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abovefold -d abovefold"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  miniflux:
+    image: miniflux/miniflux:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://abovefold:${POSTGRES_PASSWORD}@db/abovefold?sslmode=disable
+      # Lets Miniflux poll http://web:3000/api/newsletter/<token>, the
+      # generated feed for an inbound newsletter address. Miniflux blocks
+      # private-network fetches by default as an SSRF guard; that guard
+      # only bites an attacker who can already add a feed, which on a
+      # single-user instance means the account owner. Worth it to keep the
+      # address token on the Docker bridge instead of the public internet.
+      FETCHER_ALLOW_PRIVATE_NETWORKS: "1"
+      RUN_MIGRATIONS: "1"
+      CREATE_ADMIN: "1"
+      ADMIN_USERNAME: ${MINIFLUX_ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${MINIFLUX_ADMIN_PASSWORD}
+      BASE_URL: ${ABOVEFOLD_PUBLIC_URL}
+      LISTEN_ADDR: 0.0.0.0:8080
+      # Scheduler tick, minutes. Feeds wait at least 60 between checks; at 30
+      # a tick landing a few ms early pushed a feed to 90. 15 caps it near 75.
+      POLLING_FREQUENCY: "15"
+      MEDIA_PROXY_MODE: all
+      MEDIA_PROXY_RESOURCE_TYPES: image
+      METRICS_COLLECTOR: "0"
+
+  worker:
+    build: ./worker
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://abovefold:${POSTGRES_PASSWORD}@db/abovefold?sslmode=disable
+      MINIFLUX_URL: http://miniflux:8080
+      MINIFLUX_API_TOKEN: ${MINIFLUX_API_TOKEN}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      ABOVEFOLD_MONTHLY_COST_CAP_USD: ${ABOVEFOLD_MONTHLY_COST_CAP_USD:-5}
+      ABOVEFOLD_EMBED_MODEL: ${ABOVEFOLD_EMBED_MODEL:-}
+      ABOVEFOLD_SUMMARY_MODEL: ${ABOVEFOLD_SUMMARY_MODEL:-}
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # Loopback only. Put a tunnel or reverse proxy with HTTPS in front of it;
+    # never publish this port on 0.0.0.0 (it is plain HTTP).
+    ports:
+      - "127.0.0.1:${ABOVEFOLD_PORT:-8090}:3000"
+    environment:
+      DATABASE_URL: postgres://abovefold:${POSTGRES_PASSWORD}@db/abovefold?sslmode=disable
+      MINIFLUX_URL: http://miniflux:8080
+      MINIFLUX_API_TOKEN: ${MINIFLUX_API_TOKEN}
+      ABOVEFOLD_PASSWORD: ${ABOVEFOLD_PASSWORD}
+      ABOVEFOLD_SESSION_SECRET: ${ABOVEFOLD_SESSION_SECRET}
+      # Newsletter-to-feed. See db/init/10-inbound-email.sql.
+      ABOVEFOLD_INBOUND_SECRET: ${ABOVEFOLD_INBOUND_SECRET:-}
+      ABOVEFOLD_INBOUND_DOMAIN: ${ABOVEFOLD_INBOUND_DOMAIN:-}
+      ABOVEFOLD_PUBLIC_URL: ${ABOVEFOLD_PUBLIC_URL}
+      ABOVEFOLD_INTERNAL_URL: ${ABOVEFOLD_INTERNAL_URL:-http://web:3000}
+      ABOVEFOLD_TIMEZONE: ${ABOVEFOLD_TIMEZONE:-UTC}
+      ABOVEFOLD_CLIENT_IP_HEADER: ${ABOVEFOLD_CLIENT_IP_HEADER:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      ABOVEFOLD_MONTHLY_COST_CAP_USD: ${ABOVEFOLD_MONTHLY_COST_CAP_USD:-5}

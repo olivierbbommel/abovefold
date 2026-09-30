@@ -1,0 +1,17 @@
+name = "abovefold-email"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Email trigger only. This Worker has no fetch handler, so a public
+# workers.dev route would serve nothing but an error; turn it off rather than
+# leave an unnecessary internet-facing surface on the account.
+workers_dev = false
+
+[vars]
+# Your instance's public address.
+ABOVEFOLD_INBOUND_URL = "https://news.example.com/api/inbound-email"
+
+# ABOVEFOLD_INBOUND_SECRET is a secret, not a var. Set it with:
+#   wrangler secret put ABOVEFOLD_INBOUND_SECRET
+# and paste the value of ABOVEFOLD_INBOUND_SECRET from your .env.

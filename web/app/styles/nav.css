@@ -1,0 +1,112 @@
+/* Styles owned by the nav workstream of the 2026-09 redesign (spec 4, 5.1,
+   5.6, 5.8). Imported by globals.css. Everything else is utilities. */
+
+/* Page frame. Phone: 20px gutter (spec 2.3), more in landscape where the
+   notch eats the side; the bottom clears the tab bar plus the home
+   indicator. Desktop: 40px gutter, list column 720 max. */
+.page-main {
+  flex: 1 1 0%;
+  min-width: 0;
+  padding-inline: max(20px, env(safe-area-inset-left)) max(20px, env(safe-area-inset-right));
+  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px);
+}
+@media (width >= 64rem) {
+  .page-main { padding-inline: 40px; padding-bottom: 40px; }
+}
+.page-column { width: 100%; max-width: 720px; }
+
+/* Tab bar (spec 4.1): 50px plus the home indicator. */
+.tabbar { padding-bottom: env(safe-area-inset-bottom); }
+.tab-item { -webkit-tap-highlight-color: transparent; }
+.tab-icon { transition: fill-opacity var(--dur-quick) var(--ease-standard), stroke-width var(--dur-quick) var(--ease-standard); }
+
+/* Tab content swap: a 150ms crossfade, opacity only. */
+@keyframes tab-swap-in { from { opacity: 0; } }
+.tab-swap { animation: tab-swap-in 150ms var(--ease-standard); }
+
+/* Phone scroll edge (spec 2.5): transparent at rest, a glass status-bar strip
+   after 8px, a 44px glass bar with the title once the large title is gone.
+   The glass lives on a pseudo-element so it can fade. */
+.scroll-topbar { padding-top: env(safe-area-inset-top); }
+.scroll-topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  border-bottom: 1px solid transparent;
+  opacity: 0;
+  transition: opacity var(--dur-quick) var(--ease-standard), border-color var(--dur-quick) var(--ease-standard);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .scroll-topbar::before { background: var(--surface-2); }
+}
+.scroll-topbar-title { display: none; opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
+.scroll-topbar[data-state="edge"]::before { opacity: 1; }
+.scroll-topbar[data-state="bar"]::before { opacity: 1; border-bottom-color: var(--hairline); }
+.scroll-topbar[data-state="bar"] .scroll-topbar-title { display: flex; opacity: 1; }
+@starting-style { .scroll-topbar[data-state="bar"] .scroll-topbar-title { opacity: 0; } }
+
+/* Rail (spec 4.2). Hover and active only change colour, over 120ms. */
+.rail-row { transition: background-color 120ms var(--ease-standard), color 120ms var(--ease-standard); }
+.rail-search::-webkit-search-cancel-button { display: none; }
+
+/* Disclosure (spec 3.2): chevron turns 90deg over --dur-quick, the child list
+   grows from 0fr to 1fr over --dur-base, contained to its group. */
+.disclosure-chevron { transition: transform var(--dur-quick) var(--ease-standard); }
+.disclosure-chevron[data-open="true"] { transform: rotate(90deg); }
+.disclosure { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--dur-base) var(--ease-standard); }
+.disclosure[data-open="true"] { grid-template-rows: 1fr; }
+.disclosure-inner { min-height: 0; overflow: hidden; }
+.disclosure[data-open="true"] .disclosure-inner { padding-bottom: 4px; }
+
+/* Popovers (preferences, folder pull-down, shortcut list). */
+@keyframes popover-in { from { opacity: 0; transform: translateY(4px) scale(0.98); } }
+.popover { animation: popover-in var(--dur-quick) var(--ease-enter); transform-origin: bottom left; }
+
+/* Switch (Mark read as I scroll). */
+.switch { transition: background-color var(--dur-quick) var(--ease-standard); }
+.switch-knob { transition: transform var(--dur-quick) var(--ease-standard); }
+
+/* A sheet's last row, pinned to its bottom edge (the Filter sheet's Mark all
+   read) so the medium detent never hides it below the fold. It takes over
+   the sheet body's bottom padding and side gutters so the list scrolls
+   under an opaque band. */
+.sheet-footer {
+  --sheet-pad-b: calc(env(safe-area-inset-bottom) + 24px);
+  --sheet-pad-x: 20px;
+  position: sticky;
+  bottom: calc(-1 * var(--sheet-pad-b));
+  margin: 0 calc(-1 * var(--sheet-pad-x)) calc(-1 * var(--sheet-pad-b));
+  padding: 8px var(--sheet-pad-x) var(--sheet-pad-b);
+  background: var(--surface);
+  border-top: 1px solid var(--hairline);
+}
+@media (width >= 64rem) {
+  .sheet-footer { --sheet-pad-b: 24px; --sheet-pad-x: 24px; }
+}
+
+/* Library's inset grouped lists (spec 5.6): separators start at the label,
+   not the icon, the way iOS draws them. Rows darken on press, never scale. */
+.inset-group > li + li .inset-row-label { border-top: 1px solid var(--hairline); }
+.inset-row { transition: background-color 120ms var(--ease-standard); -webkit-tap-highlight-color: transparent; }
+.inset-row:active { background-color: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) { .inset-row:hover { background-color: var(--surface-2); } }
+
+/* Read rows (Recently read, the Search landing, spec 5.2): the quieter
+   headline says "you have seen this". */
+.read-list article h2 { color: var(--text-2); font-weight: 500; }
+/* The reason line is why a story was offered; a story already read has
+   been taken up, so it would only repeat itself. */
+.read-list .story-reason { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-swap, .popover { animation: none; }
+  .disclosure, .disclosure-chevron, .switch, .switch-knob, .rail-row, .inset-row, .tab-icon { transition: none; }
+  .scroll-topbar::before, .scroll-topbar-title { transition: opacity 120ms linear; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .scroll-topbar::before { background: var(--surface-2); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
