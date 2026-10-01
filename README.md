@@ -1,5 +1,8 @@
 # Abovefold
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/olivierbbommel)
+
 A self-hosted news reader that reads everything and shows you what matters.
 
 Abovefold follows your RSS feeds, subreddits, YouTube channels and email
@@ -95,8 +98,10 @@ a test when you fix a bug.
 
 ## Support
 
-Abovefold is free and always will be. If it saves you time, you can
-[buy me a coffee](https://buymeacoffee.com/olivierbbommel).
+Abovefold is free and always will be. If it saves you time, you can buy me a
+coffee:
+
+<a href="https://buymeacoffee.com/olivierbbommel"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="50"></a>
 
 ## License
 
